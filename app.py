@@ -10,6 +10,13 @@ app  = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "your_secret_key_here")
 
 def get_db_connection():
+    print("--- A TESTAR VARIÁVEIS DO .ENV ---")
+    print("DB_HOST:", os.getenv("DB_HOST"))
+    print("DB_NAME:", os.getenv("DB_NAME"))
+    print("DB_USER:", os.getenv("DB_USER"))
+    print("DB_PASSWORD:", repr(os.getenv("DB_PASSWORD"))) # Usa o repr para ver se tem espaços ou se é None
+    print("-----------------------------------")
+
     conn = psycopg2.connect(
         host=os.getenv("DB_HOST"),
         database=os.getenv("DB_NAME"),
@@ -23,7 +30,7 @@ def get_db_connection():
 def index():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
-    return render_template('index.html')
+    return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -37,7 +44,7 @@ def register():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            #verificação da existência do email
+            # Verificação da existência do email
             cur.execute("SELECT * FROM users WHERE email = %s", (email,))
             if cur.fetchone():
                 flash("Email already registered. Please use a different email.", "error")
@@ -56,6 +63,7 @@ def register():
         except Exception as e:
             flash(f"An error occurred: {str(e)}", "error")
             return redirect(url_for('register'))
+    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -97,7 +105,7 @@ def dashboard():
 def logout():
     session.pop('user_id', None)
     flash("You have been logged out.", "success")
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
