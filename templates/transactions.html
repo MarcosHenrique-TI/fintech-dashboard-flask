@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Transações - Fintech Dashboard</title>
+</head>
+<body>
+{% extends "base.html" %}
+{% block title %}Transações - FintechDash{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gestão de Transações</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Registe e consulte o extrato detalhado de receitas e despesas.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 h-fit">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Nova Transação</h3>
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor (R$)</label>
+                    <input type="number" step="0.01" name="amount" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição</label>
+                    <input type="text" name="description" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoria</label>
+                    <select name="category_id" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }} ({{ cat.type }})</option>
+                        {% else %}
+                            <option value="" disabled>Crie uma categoria primeiro!</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition">Adicionar Transação</button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">Extrato de Transações</h3>
+                <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-700 p-1 text-xs font-medium">
+                    <a href="{{ url_for('main.transactions') }}" class="px-3 py-1.5 rounded-lg transition {% if not filtro_atual %}bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Todas</a>
+                    <a href="{{ url_for('main.transactions', tipo='receita') }}" class="px-3 py-1.5 rounded-lg transition {% if filtro_atual == 'receita' %}bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Receitas</a>
+                    <a href="{{ url_for('main.transactions', tipo='despesa') }}" class="px-3 py-1.5 rounded-lg transition {% if filtro_atual == 'despesa' %}bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Despesas</a>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <th class="py-3 px-4">Data</th>
+                            <th class="py-3 px-4">Descrição</th>
+                            <th class="py-3 px-4">Categoria</th>
+                            <th class="py-3 px-4 text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                        {% for t in transactions %}
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-750/50 transition">
+                                <td class="py-3 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ t.transaction_at.strftime('%d/%m/%Y %H:%M') if t.transaction_at else '' }}</td>
+                                <td class="py-3 px-4 font-medium text-slate-900 dark:text-white">{{ t.description }}</td>
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                                        {{ t.category_name }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold whitespace-nowrap {% if t.category_type == 'receita' %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                                    {{ '+' if t.category_type == 'receita' else '-' }} R$ {{ t.amount }}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="py-8 text-center text-slate-500 dark:text-slate-400">Ainda não tem transações registadas.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+    </table>
+</body>
+</html>

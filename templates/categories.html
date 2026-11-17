@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerir Categorias - Fintech Dashboard</title>
+</head>
+<body>
+{% extends "base.html" %}
+{% block title %}Categorias - FintechDash{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gerir Categorias</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Organize as suas receitas e despesas por categorias.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 h-fit">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Nova Categoria</h3>
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome</label>
+                    <input type="text" name="name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo</label>
+                    <select name="type" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition">Adicionar Categoria</button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Categorias Registadas</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {% for cat in categories %}
+                    <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
+                        <span class="font-medium text-slate-900 dark:text-white">{{ cat.name }}</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full uppercase tracking-wider {% if cat.type == 'receita' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300{% else %}bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300{% endif %}">
+                            {{ cat.type }}
+                        </span>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-500 dark:text-slate-400 col-span-2">Ainda não tem categorias registadas.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

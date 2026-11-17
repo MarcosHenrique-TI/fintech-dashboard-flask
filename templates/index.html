@@ -3,10 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - Fintech</title>
+    <!-- Incluir Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h2>Bem-vindo ao Dashboard Financeiro!</h2>
-    <p>Estás autenticado com sucesso.</p>
-    <a href="{{ url_for('logout') }}">Terminar Sessão</a>
+{% extends "base.html" %}
+{% block title %}Dashboard - FintechDash{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Visão Geral</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Acompanhe o resumo das suas finanças em tempo real.</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ url_for('main.transactions') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-md transition">+ Nova Transação</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Receitas</p>
+            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">R$ + {{ total_receitas }}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Despesas</p>
+            <p class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">R$ - {{ total_despesas }}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Saldo Total</p>
+            <p class="text-2xl font-bold mt-2 {% if saldo >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                R$ {{ saldo }}
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 max-w-lg">
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Despesas por Categoria</h3>
+        <div class="relative w-full aspect-square max-h-72 mx-auto flex items-center justify-center">
+            <canvas id="despesasChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('despesasChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for item in despesas_por_categoria %}'{{ item.category_name }}', {% endfor %}],
+            datasets: [{
+                data: [{% for item in despesas_por_categoria %}{{ item.total }}, {% endfor %}],
+                backgroundColor: ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'inherit' } } }
+            }
+        }
+    });
+</script>
+{% endblock %}
+    <hr>
+
+    <h3>Navegação</h3>
+    <ul>
+        <li><a href="{{ url_for('main.categories') }}">Gerir Categorias</a></li>
+        <li><a href="{{ url_for('main.transactions') }}">Gerir Transações & Extrato</a></li>
+        <li><a href="{{ url_for('main.logout') }}">Terminar Sessão</a></li>
+    </ul>
 </body>
 </html>
