@@ -1,12 +1,14 @@
 # FintechDash
 
-A modular personal finance web application built with **Flask** and **PostgreSQL** (`psycopg2`), designed to track income, expenses, categories, and monthly financial performance through an executive dashboard.
+## About
+
+A multi-user personal finance control system developed in **Python (Flask)** and **PostgreSQL**, featuring metrics and cash flow visualization via an interactive dashboard.
 
 ## Features
 
 * **Authentication & Session Management**: User registration (`/register`), login (`/login`), password hashing via `werkzeug.security`, session handling (`session`), and logout (`/logout`).
 * **Monthly & Cumulative Dashboard (`/`)**:
-  * Filter metrics by month (`jan` through `dec`) or view accumulated totals (`todos`) using SQL `EXTRACT(MONTH FROM ...)`.
+  * Filter metrics and cash flow by month (`jan` through `dec`) or view accumulated totals (`todos`) using SQL `EXTRACT(MONTH FROM ...)`.
   * Key KPIs: Total Expenses, Total Income, Profit/Result Margin (`%`), and Net Balance.
   * Interactive **Chart.js** visualizations: Monthly Operational Evolution (Income vs. Expenses bar chart) and Expenses by Category (doughnut chart).
   * Analytical category breakdown table with percentage share and proportional progress bars, plus a **Recent Transactions** widget.
