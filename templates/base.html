@@ -5,42 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FintechDash{% endblock %}</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('fintech_theme') === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
+            localStorage.setItem('fintech_theme', 'light');
         }
     </script>
 </head>
-<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col">
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-xs">
+<body class="min-h-full bg-[#E3F2FD] dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200 flex flex-col">
+    <header class="bg-[#BBDEFB] dark:bg-slate-900 border-b border-blue-300/70 dark:border-slate-800 sticky top-0 z-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-6">
-                <a href="{{ url_for('main.index') }}" class="text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                     FintechDash
+                <a href="{{ url_for('main.index') }}" class="text-xl font-bold tracking-tight text-[#0047AB] dark:text-white flex items-center gap-2.5">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0047AB] text-white text-sm font-extrabold shadow-xs">F</span>
+                    <span>FintechDash</span>
                 </a>
                 {% if session.get('user_id') %}
-                <nav class="hidden md:flex space-x-4">
-                    <a href="{{ url_for('main.index') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition">Dashboard</a>
-                    <a href="{{ url_for('main.categories') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition">Categorias</a>
-                    <a href="{{ url_for('main.transactions') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition">Transações</a>
+                <nav class="hidden md:flex items-center space-x-1">
+                    <a href="{{ url_for('main.index') }}" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition">Dashboard</a>
+                    <a href="{{ url_for('main.categories') }}" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition">Categorias</a>
+                    <a href="{{ url_for('main.transactions') }}" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition">Transações</a>
                 </nav>
                 {% endif %}
             </div>
 
-            <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition" title="Alternar Tema">
-                    <svg id="theme-icon-sun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="theme-icon-moon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+            <div class="flex items-center space-x-3">
+                <button type="button" onclick="toggleTheme()" class="p-2 rounded-lg bg-white/80 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer" title="Alternar Tema Claro / Escuro">
+                    <svg id="theme-icon-sun" class="w-5 h-5 hidden dark:block text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="theme-icon-moon" class="w-5 h-5 block dark:hidden text-[#0047AB]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
                 </button>
 
                 {% if session.get('user_id') %}
-                <div class="hidden sm:flex items-center text-sm text-slate-500 dark:text-slate-400">
+                <div class="hidden sm:flex items-center text-xs font-medium px-3 py-1.5 rounded-lg bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-blue-200/80 dark:border-slate-700">
                     <span>{{ session.get('user_email') }}</span>
                 </div>
-                <a href="{{ url_for('main.logout') }}" class="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 text-sm font-medium transition">Sair</a>
+                <a href="{{ url_for('main.logout') }}" class="px-3.5 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold transition shadow-2xs">Sair</a>
                 {% endif %}
             </div>
         </div>
@@ -50,7 +55,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="mb-3 p-4 rounded-xl text-sm font-medium {% if category == 'error' %}bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800{% else %}bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800{% endif %} shadow-xs flex items-center justify-between">
+              <div class="mb-3 p-4 rounded-xl text-sm font-semibold {% if category == 'error' %}bg-rose-50 text-rose-800 dark:bg-rose-950/80 dark:text-rose-200 border border-rose-200 dark:border-rose-800{% else %}bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800{% endif %} shadow-sm flex items-center justify-between">
                   <span>{{ message }}</span>
               </div>
             {% endfor %}
@@ -64,13 +69,11 @@
 
     <script>
         function toggleTheme() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            }
+            const html = document.documentElement;
+            const goingDark = !html.classList.contains('dark');
+            html.classList.toggle('dark', goingDark);
+            localStorage.setItem('fintech_theme', goingDark ? 'dark' : 'light');
+            window.dispatchEvent(new CustomEvent('themechange', { detail: { dark: goingDark } }));
         }
     </script>
 </body>

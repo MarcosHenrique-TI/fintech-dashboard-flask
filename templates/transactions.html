@@ -9,26 +9,27 @@
 {% block title %}Transações - FintechDash{% endblock %}
 {% block content %}
 <div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gestão de Transações</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400">Registe e consulte o extrato detalhado de receitas e despesas.</p>
+    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-blue-200/80 dark:border-slate-800 shadow-sm">
+        <h1 class="text-2xl font-extrabold tracking-tight text-[#0047AB] dark:text-white">Gestão de Transações</h1>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Registe, edite, remova e consulte o extrato de receitas e despesas.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 h-fit">
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Nova Transação</h3>
+        <!-- Formulário Nova Transação -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-blue-200/80 dark:border-slate-800 shadow-sm h-fit">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Nova Transação</h3>
             <form method="POST" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor (R$)</label>
-                    <input type="number" step="0.01" name="amount" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <input type="number" step="0.01" min="0.01" name="amount" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0047AB] outline-none transition">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição</label>
-                    <input type="text" name="description" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <input type="text" name="description" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0047AB] outline-none transition">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoria</label>
-                    <select name="category_id" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <select name="category_id" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0047AB] outline-none transition">
                         {% for cat in categories %}
                             <option value="{{ cat.id }}">{{ cat.name }} ({{ cat.type }})</option>
                         {% else %}
@@ -36,47 +37,100 @@
                         {% endfor %}
                     </select>
                 </div>
-                <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition">Adicionar Transação</button>
+                <button type="submit" class="w-full py-2.5 px-4 bg-[#0047AB] hover:bg-[#00398A] text-white font-semibold rounded-xl shadow-xs transition cursor-pointer">
+                    Adicionar Transação
+                </button>
             </form>
         </div>
 
-        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700 flex flex-col">
+        <!-- Extrato de Transações -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-blue-200/80 dark:border-slate-800 shadow-sm flex flex-col">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">Extrato de Transações</h3>
-                <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-700 p-1 text-xs font-medium">
-                    <a href="{{ url_for('main.transactions') }}" class="px-3 py-1.5 rounded-lg transition {% if not filtro_atual %}bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Todas</a>
-                    <a href="{{ url_for('main.transactions', tipo='receita') }}" class="px-3 py-1.5 rounded-lg transition {% if filtro_atual == 'receita' %}bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Receitas</a>
-                    <a href="{{ url_for('main.transactions', tipo='despesa') }}" class="px-3 py-1.5 rounded-lg transition {% if filtro_atual == 'despesa' %}bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Despesas</a>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Extrato de Transações</h3>
+                <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs font-medium border border-slate-200/70 dark:border-slate-700">
+                    <a href="{{ url_for('main.transactions') }}" class="px-3 py-1.5 rounded-lg transition {% if not filtro_atual %}bg-white dark:bg-slate-900 text-[#0047AB] dark:text-blue-400 shadow-2xs font-semibold{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Todas</a>
+                    <a href="{{ url_for('main.transactions', tipo='receita') }}" class="px-3 py-1.5 rounded-lg transition {% if filtro_atual == 'receita' %}bg-white dark:bg-slate-900 text-[#0047AB] dark:text-blue-400 shadow-2xs font-semibold{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Receitas</a>
+                    <a href="{{ url_for('main.transactions', tipo='despesa') }}" class="px-3 py-1.5 rounded-lg transition {% if filtro_atual == 'despesa' %}bg-white dark:bg-slate-900 text-[#0047AB] dark:text-blue-400 shadow-2xs font-semibold{% else %}text-slate-600 dark:text-slate-300 hover:text-slate-900{% endif %}">Despesas</a>
                 </div>
             </div>
 
             <div class="overflow-x-auto flex-1">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            <th class="py-3 px-4">Data</th>
-                            <th class="py-3 px-4">Descrição</th>
-                            <th class="py-3 px-4">Categoria</th>
-                            <th class="py-3 px-4 text-right">Valor</th>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <th class="py-3 px-3">Data</th>
+                            <th class="py-3 px-3">Descrição</th>
+                            <th class="py-3 px-3">Categoria</th>
+                            <th class="py-3 px-3 text-right">Valor</th>
+                            <th class="py-3 px-3 text-right">Ações</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 text-sm">
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
                         {% for t in transactions %}
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-750/50 transition">
-                                <td class="py-3 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ t.transaction_at.strftime('%d/%m/%Y %H:%M') if t.transaction_at else '' }}</td>
-                                <td class="py-3 px-4 font-medium text-slate-900 dark:text-white">{{ t.description }}</td>
-                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                                <td class="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap text-xs">
+                                    {{ t.transaction_at.strftime('%d/%m/%Y %H:%M') if t.transaction_at else '' }}
+                                </td>
+                                <td class="py-3 px-3 font-medium text-slate-900 dark:text-white">{{ t.description }}</td>
+                                <td class="py-3 px-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-slate-800 text-[#0047AB] dark:text-blue-300">
                                         {{ t.category_name }}
                                     </span>
                                 </td>
-                                <td class="py-3 px-4 text-right font-semibold whitespace-nowrap {% if t.category_type == 'receita' %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                                <td class="py-3 px-3 text-right font-semibold whitespace-nowrap {% if t.category_type == 'receita' %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
                                     {{ '+' if t.category_type == 'receita' else '-' }} R$ {{ t.amount }}
+                                </td>
+                                <td class="py-3 px-3 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1.5">
+                                        <button type="button"
+                                                onclick="toggleEditTx({{ t.id }})"
+                                                class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-[#0047AB] dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 transition cursor-pointer">
+                                            Editar
+                                        </button>
+                                        <form method="POST" action="{{ url_for('main.delete_transaction', transaction_id=t.id) }}" onsubmit="return confirm('Remover esta transação?');" class="inline">
+                                            <button type="submit"
+                                                    class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 dark:hover:bg-rose-950 transition cursor-pointer">
+                                                Remover
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Linha de Edição Inline -->
+                            <tr id="edit-tx-{{ t.id }}" class="hidden bg-blue-50/50 dark:bg-slate-800/40">
+                                <td colspan="5" class="p-4">
+                                    <form method="POST" action="{{ url_for('main.edit_transaction', transaction_id=t.id) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Valor (R$)</label>
+                                            <input type="number" step="0.01" min="0.01" name="amount" value="{{ t.amount }}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Descrição</label>
+                                            <input type="text" name="description" value="{{ t.description }}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Categoria</label>
+                                            <select name="category_id" required class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white">
+                                                {% for cat in categories %}
+                                                    <option value="{{ cat.id }}" {% if cat.id == t.category_id %}selected{% endif %}>{{ cat.name }} ({{ cat.type }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button type="submit" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer">
+                                                Salvar
+                                            </button>
+                                            <button type="button" onclick="toggleEditTx({{ t.id }})" class="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer">
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
                                 </td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="4" class="py-8 text-center text-slate-500 dark:text-slate-400">Ainda não tem transações registadas.</td>
+                                <td colspan="5" class="py-8 text-center text-slate-500 dark:text-slate-400">Ainda não tem transações registadas.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -85,6 +139,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleEditTx(id) {
+        const row = document.getElementById('edit-tx-' + id);
+        if (row) row.classList.toggle('hidden');
+    }
+</script>
 {% endblock %}
     </table>
 </body>
