@@ -7,45 +7,44 @@
 <body>
 {% extends "base.html" %}
 {% block title %}Categorias - FintechDash{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
-    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-blue-200/80 dark:border-slate-800 shadow-sm">
-        <h1 class="text-2xl font-extrabold tracking-tight text-[#0047AB] dark:text-white">Gerir Categorias</h1>
-        <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Crie, edite ou remova as suas categorias de receitas e despesas.</p>
+    <div class="bg-white dark:bg-slate-900 p-5 rounded border border-blue-200/80 dark:border-slate-800">
+        <h1 class="text-xl font-semibold tracking-tight text-[#0047AB] dark:text-slate-100">Categorias</h1>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Gerencie suas categorias de receitas e despesas.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Formulário Nova Categoria -->
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-blue-200/80 dark:border-slate-800 shadow-sm h-fit">
-            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Nova Categoria</h3>
+        <div class="bg-white dark:bg-slate-900 p-5 rounded border border-blue-200/80 dark:border-slate-800 h-fit">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Nova categoria</h2>
             <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome</label>
-                    <input type="text" name="name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0047AB] outline-none transition">
+                    <label for="cat-name" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Nome</label>
+                    <input id="cat-name" type="text" name="name" required class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:border-[#0047AB] outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo</label>
-                    <select name="type" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0047AB] outline-none transition">
+                    <label for="cat-type" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo</label>
+                    <select id="cat-type" name="type" required class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:border-[#0047AB] outline-none">
                         <option value="receita">Receita</option>
                         <option value="despesa">Despesa</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full py-2.5 px-4 bg-[#0047AB] hover:bg-[#00398A] text-white font-semibold rounded-xl shadow-xs transition cursor-pointer">
-                    Adicionar Categoria
+                <button type="submit" class="w-full py-2 px-4 bg-[#0047AB] hover:bg-[#00398A] text-white text-sm font-medium rounded cursor-pointer">
+                    Adicionar
                 </button>
             </form>
         </div>
 
-        <!-- Lista de Categorias -->
-        <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-blue-200/80 dark:border-slate-800 shadow-sm">
-            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Categorias Registadas</h3>
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-5 rounded border border-blue-200/80 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Categorias cadastradas</h2>
             <div class="space-y-3">
                 {% for cat in categories %}
-                    <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60">
+                    <div class="p-3.5 rounded border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60">
                         <div class="flex flex-wrap items-center justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <span class="font-semibold text-slate-900 dark:text-white">{{ cat.name }}</span>
-                                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider {% if cat.type == 'receita' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300{% else %}bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300{% endif %}">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ cat.name }}</span>
+                                <span class="px-2 py-0.5 text-xs font-medium rounded {% if cat.type == 'receita' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300{% else %}bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300{% endif %}">
                                     {{ cat.type }}
                                 </span>
                             </div>
@@ -53,47 +52,46 @@
                             <div class="flex items-center gap-2">
                                 <button type="button"
                                         onclick="toggleEditCat({{ cat.id }})"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-[#0047AB] dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 transition cursor-pointer">
+                                        class="px-2.5 py-1 rounded text-xs font-medium bg-blue-50 hover:bg-blue-100 text-[#0047AB] dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 cursor-pointer">
                                     Editar
                                 </button>
 
-                                <form method="POST" action="{{ url_for('main.delete_category', category_id=cat.id) }}" onsubmit="return confirm('Remover a categoria "{{ cat.name }}"?');">
+                                <form method="POST" action="{{ url_for('main.delete_category', category_id=cat.id) }}" onsubmit="return confirm('Excluir a categoria {{ cat.name | e }}?');">
                                     <button type="submit"
-                                            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 dark:hover:bg-rose-950 transition cursor-pointer">
-                                        Remover
+                                            class="px-2.5 py-1 rounded text-xs font-medium bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 dark:hover:bg-rose-950 cursor-pointer">
+                                        Excluir
                                     </button>
                                 </form>
                             </div>
                         </div>
 
-                        <!-- Formulário de Edição Inline -->
                         <form id="edit-cat-{{ cat.id }}"
                               method="POST"
                               action="{{ url_for('main.edit_category', category_id=cat.id) }}"
-                              class="hidden mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                              class="hidden mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Nome</label>
-                                <input type="text" name="name" value="{{ cat.name }}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white">
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Nome</label>
+                                <input type="text" name="name" value="{{ cat.name }}" required class="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-100">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Tipo</label>
-                                <select name="type" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white">
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tipo</label>
+                                <select name="type" class="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-100">
                                     <option value="receita" {% if cat.type == 'receita' %}selected{% endif %}>Receita</option>
                                     <option value="despesa" {% if cat.type == 'despesa' %}selected{% endif %}>Despesa</option>
                                 </select>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button type="submit" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer">
+                                <button type="submit" class="px-3 py-1.5 rounded text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
                                     Salvar
                                 </button>
-                                <button type="button" onclick="toggleEditCat({{ cat.id }})" class="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer">
+                                <button type="button" onclick="toggleEditCat({{ cat.id }})" class="px-3 py-1.5 rounded text-xs font-medium bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
                                     Cancelar
                                 </button>
                             </div>
                         </form>
                     </div>
                 {% else %}
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Ainda não tem categorias registadas.</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Nenhuma categoria cadastrada.</p>
                 {% endfor %}
             </div>
         </div>
@@ -102,8 +100,8 @@
 
 <script>
     function toggleEditCat(id) {
-        const form = document.getElementById('edit-cat-' + id);
-        if (form) form.classList.toggle('hidden');
+        const form = document.getElementById("edit-cat-" + id);
+        if (form) form.classList.toggle("hidden");
     }
 </script>
 {% endblock %}

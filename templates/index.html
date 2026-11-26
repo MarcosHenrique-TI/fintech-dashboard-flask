@@ -8,72 +8,70 @@
 </head>
 <body>
 {% extends "base.html" %}
-{% block title %}Dashboard - FintechDash{% endblock %}
+{% block title %}Resumo - FintechDash{% endblock %}
+
 {% block content %}
 <div class="space-y-5">
-    <!-- Barra Superior: Título + Filtro de Meses ("Mês jan fev ... dez") + Ação -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
-            <a href="{{ url_for('main.index') }}" class="text-2xl font-extrabold tracking-tight text-[#0047AB] dark:text-white">
-            Visão Geral
+            <a href="{{ url_for('main.index') }}" class="text-xl font-semibold tracking-tight text-[#0047AB] dark:text-slate-100">
+                Resumo
             </a>
 
-            <div class="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl shadow-md flex flex-wrap items-center gap-1 border border-white/40 dark:border-slate-800">
-                <span class="text-xs font-bold text-[#0047AB] dark:text-blue-400 mr-1.5">Mês</span>
+            <div class="bg-white dark:bg-slate-900 px-3 py-1.5 rounded border border-blue-200/80 dark:border-slate-800 flex flex-wrap items-center gap-1">
+                <span class="text-xs font-medium text-slate-600 dark:text-slate-400 mr-1">Mês</span>
                 <a href="{{ url_for('main.index') }}"
-                   class="px-2 py-0.5 rounded-md text-xs font-semibold transition {% if not mes_selecionado %}bg-[#0047AB] text-white{% else %}text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800{% endif %}">
+                   class="px-2 py-0.5 rounded text-xs font-medium {% if not mes_selecionado %}bg-[#0047AB] text-white{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800{% endif %}">
                     todos
                 </a>
                 {% for num_mes, nome_mes in meses %}
                     <a href="{{ url_for('main.index', mes=num_mes) }}"
-                       class="px-2 py-0.5 rounded-md text-xs font-semibold transition {% if mes_selecionado == num_mes %}bg-[#0047AB] text-white{% else %}text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800{% endif %}">
+                       class="px-2 py-0.5 rounded text-xs font-medium {% if mes_selecionado == num_mes %}bg-[#0047AB] text-white{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800{% endif %}">
                         {{ nome_mes }}
                     </a>
                 {% endfor %}
             </div>
         </div>
 
-        <a href="{{ url_for('main.transactions') }}" class="px-4 py-2 bg-white hover:bg-blue-50 text-[#0047AB] dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition w-fit">
-            + Nova Transação
+        <a href="{{ url_for('main.transactions') }}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-[#0047AB] dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-blue-400 text-xs font-medium rounded border border-blue-200/80 dark:border-slate-800 w-fit">
+            Nova transação
         </a>
     </div>
 
-    <!-- Linha de KPIs Principais -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white dark:bg-slate-900 px-6 py-5 rounded-2xl shadow-md border border-white/40 dark:border-slate-800 flex flex-col items-center justify-center text-center">
-            <span class="text-2xl sm:text-3xl font-extrabold text-[#0047AB] dark:text-blue-400 tracking-tight">
+        <div class="bg-white dark:bg-slate-900 px-5 py-4 rounded border border-blue-200/80 dark:border-slate-800 flex flex-col items-center justify-center text-center">
+            <span class="text-2xl font-semibold text-[#0047AB] dark:text-blue-400 tabular-nums">
                 R$ {{ total_despesas }}
             </span>
-            <span class="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">Despesas</span>
+            <span class="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Despesas</span>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 px-6 py-5 rounded-2xl shadow-md border border-white/40 dark:border-slate-800 flex flex-col items-center justify-center text-center">
-            <span class="text-2xl sm:text-3xl font-extrabold text-[#0047AB] dark:text-blue-400 tracking-tight">
+        <div class="bg-white dark:bg-slate-900 px-5 py-4 rounded border border-blue-200/80 dark:border-slate-800 flex flex-col items-center justify-center text-center">
+            <span class="text-2xl font-semibold text-[#0047AB] dark:text-blue-400 tabular-nums">
                 R$ {{ total_receitas }}
             </span>
-            <span class="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">Receita</span>
+            <span class="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Receitas</span>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 px-6 py-5 rounded-2xl shadow-md border border-white/40 dark:border-slate-800 flex flex-col items-center justify-center text-center">
-            <span class="text-2xl sm:text-3xl font-extrabold {% if margem_lucro_pct >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %} tracking-tight">
+        <div class="bg-white dark:bg-slate-900 px-5 py-4 rounded border border-blue-200/80 dark:border-slate-800 flex flex-col items-center justify-center text-center">
+            <span class="text-2xl font-semibold {% if margem_lucro_pct >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %} tabular-nums">
                 {{ margem_lucro_pct }}%
             </span>
-            <span class="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">% Margem / Lucro</span>
+            <span class="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Margem</span>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 px-6 py-5 rounded-2xl shadow-md border border-white/40 dark:border-slate-800 flex flex-col items-center justify-center text-center">
-            <span class="text-2xl sm:text-3xl font-extrabold {% if saldo >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %} tracking-tight">
+        <div class="bg-white dark:bg-slate-900 px-5 py-4 rounded border border-blue-200/80 dark:border-slate-800 flex flex-col items-center justify-center text-center">
+            <span class="text-2xl font-semibold {% if saldo >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %} tabular-nums">
                 R$ {{ saldo }}
             </span>
-            <span class="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">Saldo Líquido</span>
+            <span class="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">Saldo líquido</span>
         </div>
     </div>
 
-    <!-- Gráficos com Cabeçalho Colorido -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl shadow-md overflow-hidden border border-white/40 dark:border-slate-800 flex flex-col">
+        <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded border border-blue-200/80 dark:border-slate-800 overflow-hidden flex flex-col">
             <div class="bg-[#22A047] px-4 py-2 text-center">
-                <h3 class="text-sm font-bold text-white tracking-wide">Despesas por Categoria</h3>
+                <h2 class="text-xs font-semibold text-white">Despesas por categoria</h2>
             </div>
             <div class="p-5 flex-1 flex items-center justify-center">
                 <div class="relative w-full h-64 flex items-center justify-center">
@@ -82,9 +80,9 @@
             </div>
         </div>
 
-        <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl shadow-md overflow-hidden border border-white/40 dark:border-slate-800 flex flex-col">
+        <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded border border-blue-200/80 dark:border-slate-800 overflow-hidden flex flex-col">
             <div class="bg-[#0F62FE] px-4 py-2 text-center">
-                <h3 class="text-sm font-bold text-white tracking-wide">Evolução Operacional Mensal (Jan – Dez)</h3>
+                <h2 class="text-xs font-semibold text-white">Evolução mensal (jan – dez)</h2>
             </div>
             <div class="p-5 flex-1">
                 <div class="relative w-full h-64">
@@ -94,12 +92,11 @@
         </div>
     </div>
 
-    <!-- Parte Inferior: Análise por Categoria + Últimas Transações -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl shadow-md overflow-hidden border border-white/40 dark:border-slate-800">
+        <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded border border-blue-200/80 dark:border-slate-800 overflow-hidden">
             <div class="bg-[#22A047] px-4 py-2 flex items-center justify-between">
-                <h3 class="text-sm font-bold text-white tracking-wide">Análise por Categoria</h3>
-                <span class="text-[11px] font-semibold text-emerald-100">
+                <h2 class="text-xs font-semibold text-white">Despesas por categoria</h2>
+                <span class="text-xs text-emerald-100">
                     {% if mes_selecionado %}Mês {{ mes_selecionado }}{% else %}Acumulado{% endif %}
                 </span>
             </div>
@@ -107,35 +104,35 @@
             <div class="p-5 overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            <th class="py-2.5 px-3">Categoria</th>
-                            <th class="py-2.5 px-3 w-2/5">Proporção</th>
-                            <th class="py-2.5 px-3 text-right">%</th>
-                            <th class="py-2.5 px-3 text-right">Valor</th>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
+                            <th class="py-2 px-3">Categoria</th>
+                            <th class="py-2 px-3 w-2/5">Proporção</th>
+                            <th class="py-2 px-3 text-right">%</th>
+                            <th class="py-2 px-3 text-right">Valor</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
                         {% for cat in despesas_por_categoria %}
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                                <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <td class="py-2 px-3 font-medium text-slate-800 dark:text-slate-100 whitespace-nowrap">
                                     {{ cat.category_name }}
                                 </td>
-                                <td class="py-2.5 px-3">
-                                    <div class="w-full bg-slate-200/80 dark:bg-slate-800 rounded-sm h-3 overflow-hidden">
-                                        <div class="bg-[#22A047] h-3 transition-all duration-300" style="width: {{ cat.pct_barra }}%"></div>
+                                <td class="py-2 px-3">
+                                    <div class="w-full bg-slate-200/80 dark:bg-slate-800 rounded-xs h-2.5 overflow-hidden">
+                                        <div class="bg-[#22A047] h-2.5" style="width: {{ cat.pct_barra }}%"></div>
                                     </div>
                                 </td>
-                                <td class="py-2.5 px-3 text-right font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                                <td class="py-2 px-3 text-right text-slate-600 dark:text-slate-300 whitespace-nowrap tabular-nums">
                                     {{ cat.pct_total }}%
                                 </td>
-                                <td class="py-2.5 px-3 text-right font-bold text-[#0047AB] dark:text-blue-400 whitespace-nowrap">
+                                <td class="py-2 px-3 text-right font-medium text-[#0047AB] dark:text-blue-400 whitespace-nowrap tabular-nums">
                                     R$ {{ cat.total }}
                                 </td>
                             </tr>
                         {% else %}
                             <tr>
                                 <td colspan="4" class="py-6 text-center text-slate-500 dark:text-slate-400">
-                                    Sem despesas registadas para o período selecionado.
+                                    Sem despesas no período selecionado.
                                 </td>
                             </tr>
                         {% endfor %}
@@ -144,46 +141,46 @@
             </div>
         </div>
 
-        <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl shadow-md overflow-hidden border border-white/40 dark:border-slate-800">
+        <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded border border-blue-200/80 dark:border-slate-800 overflow-hidden">
             <div class="bg-[#0F62FE] px-4 py-2 flex items-center justify-between">
-                <h3 class="text-sm font-bold text-white tracking-wide">Últimas Transações</h3>
-                <a href="{{ url_for('main.transactions') }}" class="text-[11px] font-bold text-blue-100 hover:text-white hover:underline">
-                    Ver extrato →
+                <h2 class="text-xs font-semibold text-white">Últimas transações</h2>
+                <a href="{{ url_for('main.transactions') }}" class="text-xs text-blue-100 hover:text-white hover:underline">
+                    Ver todas
                 </a>
             </div>
 
             <div class="p-5 overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            <th class="py-2.5 px-3">Data</th>
-                            <th class="py-2.5 px-3">Descrição</th>
-                            <th class="py-2.5 px-3">Categoria</th>
-                            <th class="py-2.5 px-3 text-right">Valor</th>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
+                            <th class="py-2 px-3">Data</th>
+                            <th class="py-2 px-3">Descrição</th>
+                            <th class="py-2 px-3">Categoria</th>
+                            <th class="py-2 px-3 text-right">Valor</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
                         {% for t in ultimas_transacoes %}
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                                <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap text-xs">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <td class="py-2 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap text-xs tabular-nums">
                                     {{ t.transaction_at.strftime('%d/%m/%Y') if t.transaction_at else '' }}
                                 </td>
-                                <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">
+                                <td class="py-2 px-3 font-medium text-slate-800 dark:text-slate-100">
                                     {{ t.description }}
                                 </td>
-                                <td class="py-2.5 px-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 dark:bg-slate-800 text-[#0047AB] dark:text-blue-300">
+                                <td class="py-2 px-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 dark:bg-slate-800 text-[#0047AB] dark:text-blue-300">
                                         {{ t.category_name }}
                                     </span>
                                 </td>
-                                <td class="py-2.5 px-3 text-right font-bold whitespace-nowrap {% if t.category_type == 'receita' %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                                <td class="py-2 px-3 text-right font-medium whitespace-nowrap tabular-nums {% if t.category_type == 'receita' %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
                                     {{ '+' if t.category_type == 'receita' else '-' }} R$ {{ t.amount }}
                                 </td>
                             </tr>
                         {% else %}
                             <tr>
                                 <td colspan="4" class="py-6 text-center text-slate-500 dark:text-slate-400">
-                                    Nenhuma transação encontrada para este período.
+                                    Nenhuma transação no período selecionado.
                                 </td>
                             </tr>
                         {% endfor %}
@@ -199,30 +196,30 @@
     let despesasChartInstance = null;
 
     function renderDashboardCharts() {
-        const isDark = document.documentElement.classList.contains('dark');
-        const textColor = isDark ? '#cbd5e1' : '#334155';
-        const gridColor = isDark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(15, 23, 42, 0.08)';
+        const isDark = document.documentElement.classList.contains("dark");
+        const textColor = isDark ? "#cbd5e1" : "#334155";
+        const gridColor = isDark ? "rgba(148, 163, 184, 0.16)" : "rgba(15, 23, 42, 0.08)";
 
         if (mensalChartInstance) mensalChartInstance.destroy();
         if (despesasChartInstance) despesasChartInstance.destroy();
 
-        const mensalCtx = document.getElementById('mensalChart').getContext('2d');
+        const mensalCtx = document.getElementById("mensalChart").getContext("2d");
         mensalChartInstance = new Chart(mensalCtx, {
-            type: 'bar',
+            type: "bar",
             data: {
-                labels: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
+                labels: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
                 datasets: [
                     {
-                        label: 'Receitas',
+                        label: "Receitas",
                         data: {{ receitas_mensais | tojson }},
-                        backgroundColor: '#0F62FE',
-                        borderRadius: 4
+                        backgroundColor: "#0F62FE",
+                        borderRadius: 3
                     },
                     {
-                        label: 'Despesas',
+                        label: "Despesas",
                         data: {{ despesas_mensais | tojson }},
-                        backgroundColor: '#22A047',
-                        borderRadius: 4
+                        backgroundColor: "#22A047",
+                        borderRadius: 3
                     }
                 ]
             },
@@ -230,39 +227,39 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { ticks: { color: textColor, font: { weight: '600' } }, grid: { display: false } },
+                    x: { ticks: { color: textColor }, grid: { display: false } },
                     y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } }
                 },
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: textColor, boxWidth: 12, font: { family: 'inherit', weight: '600' } } }
+                    legend: { position: "bottom", labels: { color: textColor, boxWidth: 12 } }
                 }
             }
         });
 
-        const ctx = document.getElementById('despesasChart').getContext('2d');
-        despesasChartInstance = new Chart(ctx, {
-            type: 'doughnut',
+        const despesasCtx = document.getElementById("despesasChart").getContext("2d");
+        despesasChartInstance = new Chart(despesasCtx, {
+            type: "doughnut",
             data: {
-                labels: [{% for item in despesas_por_categoria %}'{{ item.category_name }}', {% endfor %}],
+                labels: {{ despesas_por_categoria | map(attribute='category_name') | list | tojson }},
                 datasets: [{
-                    data: [{% for item in despesas_por_categoria %}{{ item.total }}, {% endfor %}],
-                    backgroundColor: ['#22A047', '#0F62FE', '#f59e0b', '#6366f1', '#ec4899'],
+                    data: {{ despesas_por_categoria | map(attribute='total') | map('float') | list | tojson }},
+                    backgroundColor: ["#22A047", "#0F62FE", "#d97706", "#0284c7", "#db2777"],
                     borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '62%',
+                cutout: "62%",
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: textColor, boxWidth: 12, font: { family: 'inherit', weight: '600' } } }
+                    legend: { position: "bottom", labels: { color: textColor, boxWidth: 12 } }
                 }
             }
         });
     }
 
     renderDashboardCharts();
-    window.addEventListener('themechange', renderDashboardCharts);
+    window.addEventListener("themechange", renderDashboardCharts);
 </script>
 {% endblock %}
     <hr>

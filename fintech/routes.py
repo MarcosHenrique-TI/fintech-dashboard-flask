@@ -1,487 +1,498 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from fintech.db import db
 
-bp = Blueprint('main', __name__)
+bp = Blueprint("main", __name__)
+
+MONTHS = [
+    (1, "jan"), (2, "fev"), (3, "mar"), (4, "abr"),
+    (5, "mai"), (6, "jun"), (7, "jul"), (8, "ago"),
+    (9, "set"), (10, "out"), (11, "nov"), (12, "dez"),
+]
 
 
-@bp.route('/')
+def _require_user():
+    return session.get("user_id")
+
+
+def _parse_amount(raw_value):
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        return None
+    return value if value > 0 else None
+
+
+@bp.route("/")
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
-    mes = request.args.get('mes', type=int)
-    if mes is not None and (mes < 1 or mes > 12):
-        mes = None
+    month = request.args.get("mes", type=int)
+    if month is not None and not (1 <= month <= 12):
+        month = None
 
     conn = db.get_connection()
-    total_receitas = 0
-    total_despesas = 0
-    saldo = 0
-    margem_lucro_pct = 0.0
-    despesas_por_categoria = []
-    receitas_mensais = [0.0] * 12
-    despesas_mensais = [0.0] * 12
-    ultimas_transacoes = []
+    total_income = 0
+    total_expense = 0
+    balance = 0
+    margin_pct = 0.0
+    categories_breakdown = []
+    monthly_income = [0.0] * 12
+    monthly_expense = [0.0] * 12
+    recent_transactions = []
 
     try:
-        with conn.cursor() as cursor:
-            filtro_mes_sql = ""
-            params_resumo = [user_id]
+        with conn.cursor() as cur:
+            month_clause = ""
+            params = [user_id]
+            if month is not None:
+                month_clause = " AND EXTRACT(MONTH FROM t.transaction_at) = %s"
+                params.append(month)
 
-            if mes is not None:
-                filtro_mes_sql = " AND EXTRACT(MONTH FROM t.transaction_at) = %s"
-                params_resumo.append(mes)
-
-            cursor.execute(f"""
+            cur.execute(
+                f"""
                 SELECT
                     COALESCE(SUM(CASE WHEN c.type = 'receita' THEN t.amount ELSE 0 END), 0) AS total_receitas,
                     COALESCE(SUM(CASE WHEN c.type = 'despesa' THEN t.amount ELSE 0 END), 0) AS total_despesas
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
                 WHERE c.user_id = %s
-                {filtro_mes_sql};
-            """, params_resumo)
+                {month_clause};
+                """,
+                params,
+            )
+            summary = cur.fetchone()
+            if summary:
+                total_income = summary["total_receitas"]
+                total_expense = summary["total_despesas"]
+                balance = total_income - total_expense
+                if total_income and float(total_income) > 0:
+                    margin_pct = round((float(balance) / float(total_income)) * 100, 1)
 
-            resumo = cursor.fetchone()
-            if resumo:
-                total_receitas = resumo['total_receitas']
-                total_despesas = resumo['total_despesas']
-                saldo = total_receitas - total_despesas
-                if total_receitas and float(total_receitas) > 0:
-                    margem_lucro_pct = round((float(saldo) / float(total_receitas)) * 100, 1)
-
-            params_cat = [user_id]
-            if mes is not None:
-                params_cat.append(mes)
-
-            cursor.execute(f"""
+            cur.execute(
+                f"""
                 SELECT c.name AS category_name, SUM(t.amount) AS total
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
                 WHERE c.user_id = %s AND c.type = 'despesa'
-                {filtro_mes_sql}
+                {month_clause}
                 GROUP BY c.name
                 ORDER BY total DESC;
-            """, params_cat)
-            raw_categorias = cursor.fetchall()
+                """,
+                params,
+            )
+            raw_cats = cur.fetchall()
 
-            total_despesas_float = float(total_despesas) if total_despesas else 0.0
-            maior_valor = float(raw_categorias[0]['total']) if raw_categorias else 0.0
+            total_expense_f = float(total_expense) if total_expense else 0.0
+            top_value = float(raw_cats[0]["total"]) if raw_cats else 0.0
 
-            for item in raw_categorias:
-                valor_float = float(item['total'])
-                pct_total = round((valor_float / total_despesas_float) * 100, 1) if total_despesas_float > 0 else 0.0
-                pct_barra = round((valor_float / maior_valor) * 100, 1) if maior_valor > 0 else 0.0
-                despesas_por_categoria.append({
-                    'category_name': item['category_name'],
-                    'total': item['total'],
-                    'pct_total': pct_total,
-                    'pct_barra': pct_barra
+            for row in raw_cats:
+                val = float(row["total"])
+                categories_breakdown.append({
+                    "category_name": row["category_name"],
+                    "total": row["total"],
+                    "pct_total": round((val / total_expense_f) * 100, 1) if total_expense_f > 0 else 0.0,
+                    "pct_barra": round((val / top_value) * 100, 1) if top_value > 0 else 0.0,
                 })
 
-            params_ult = [user_id]
-            if mes is not None:
-                params_ult.append(mes)
-
-            cursor.execute(f"""
-                SELECT t.id, t.amount, t.description, t.transaction_at, c.name AS category_name, c.type AS category_type
+            cur.execute(
+                f"""
+                SELECT t.id, t.amount, t.description, t.transaction_at,
+                       c.name AS category_name, c.type AS category_type
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
                 WHERE c.user_id = %s
-                {filtro_mes_sql}
+                {month_clause}
                 ORDER BY t.transaction_at DESC, t.id DESC
                 LIMIT 5;
-            """, params_ult)
-            ultimas_transacoes = cursor.fetchall()
+                """,
+                params,
+            )
+            recent_transactions = cur.fetchall()
 
-            # Evolução mensal (jan..dez) para receitas e despesas
-            cursor.execute("""
+            # Série anual completa alimenta o gráfico comparativo independente do filtro mensal.
+            cur.execute(
+                """
                 SELECT
-                    EXTRACT(MONTH FROM t.transaction_at)::int AS mes_num,
+                    EXTRACT(MONTH FROM t.transaction_at)::int AS month_num,
                     COALESCE(SUM(CASE WHEN c.type = 'receita' THEN t.amount ELSE 0 END), 0) AS receitas,
                     COALESCE(SUM(CASE WHEN c.type = 'despesa' THEN t.amount ELSE 0 END), 0) AS despesas
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
                 WHERE c.user_id = %s
-                GROUP BY mes_num
-                ORDER BY mes_num;
-            """, (user_id,))
-
-            for linha in cursor.fetchall():
-                idx = linha['mes_num'] - 1
+                GROUP BY month_num
+                ORDER BY month_num;
+                """,
+                (user_id,),
+            )
+            for row in cur.fetchall():
+                idx = row["month_num"] - 1
                 if 0 <= idx < 12:
-                    receitas_mensais[idx] = float(linha['receitas'])
-                    despesas_mensais[idx] = float(linha['despesas'])
-
-    except Exception as e:
-        flash(f"Erro ao calcular dados do dashboard: {e}", "error")
+                    monthly_income[idx] = float(row["receitas"])
+                    monthly_expense[idx] = float(row["despesas"])
+    except Exception as exc:
+        flash(f"Não foi possível carregar o resumo: {exc}", "error")
     finally:
         db.put_connection(conn)
 
-    meses = [
-        (1, 'jan'), (2, 'fev'), (3, 'mar'), (4, 'abr'),
-        (5, 'mai'), (6, 'jun'), (7, 'jul'), (8, 'ago'),
-        (9, 'set'), (10, 'out'), (11, 'nov'), (12, 'dez')
-    ]
-
     return render_template(
-        'index.html',
-        total_receitas=total_receitas,
-        total_despesas=total_despesas,
-        saldo=saldo,
-        margem_lucro_pct=margem_lucro_pct,
-        mes_selecionado=mes,
-        meses=meses,
-        despesas_por_categoria=despesas_por_categoria,
-        receitas_mensais=receitas_mensais,
-        despesas_mensais=despesas_mensais,
-        ultimas_transacoes=ultimas_transacoes
+        "index.html",
+        total_receitas=total_income,
+        total_despesas=total_expense,
+        saldo=balance,
+        margem_lucro_pct=margin_pct,
+        mes_selecionado=month,
+        meses=MONTHS,
+        despesas_por_categoria=categories_breakdown,
+        receitas_mensais=monthly_income,
+        despesas_mensais=monthly_expense,
+        ultimas_transacoes=recent_transactions,
     )
 
 
-@bp.route('/register', methods=['GET', 'POST'])
+@bp.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip()
+        password = request.form.get("password") or ""
 
-        hashed_password = generate_password_hash(password)
+        if not email or not password:
+            flash("Informe email e senha.", "error")
+            return render_template("register.html")
 
+        password_hash = generate_password_hash(password)
         conn = db.get_connection()
         try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-                if cursor.fetchone():
-                    flash("Este email já está registado!", "error")
-                    return redirect(url_for('main.register'))
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM users WHERE email = %s;", (email,))
+                if cur.fetchone():
+                    flash("Este email já está cadastrado.", "error")
+                    return redirect(url_for("main.register"))
 
-                cursor.execute(
-                    "INSERT INTO users (email, password) VALUES (%s, %s)",
-                    (email, hashed_password)
+                cur.execute(
+                    "INSERT INTO users (email, password) VALUES (%s, %s);",
+                    (email, password_hash),
                 )
                 conn.commit()
 
-            flash("Conta criada com sucesso! Faça login.", "success")
-            return redirect(url_for('main.login'))
-        except Exception as e:
+            flash("Conta criada. Faça login para continuar.", "success")
+            return redirect(url_for("main.login"))
+        except Exception as exc:
             conn.rollback()
-            flash(f"Erro ao registar: {e}", "error")
+            flash(f"Erro ao criar conta: {exc}", "error")
         finally:
             db.put_connection(conn)
 
-    return render_template('register.html')
+    return render_template("register.html")
 
 
-@bp.route('/login', methods=['GET', 'POST'])
+@bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip()
+        password = request.form.get("password") or ""
 
         conn = db.get_connection()
         try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT id, email, password FROM users WHERE email = %s;", (email,))
-                user = cursor.fetchone()
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, email, password FROM users WHERE email = %s;", (email,))
+                user = cur.fetchone()
 
-                if user and check_password_hash(user['password'], password):
-                    session['user_id'] = user['id']
-                    session['user_email'] = user['email']
-                    flash("Login efetuado com sucesso!", "success")
-                    return redirect(url_for('main.index'))
-                else:
-                    flash("Email ou senha incorretos.", "error")
-        except Exception as e:
-            print(f"DETALHE DO ERRO NO LOGIN: {str(e)}")
-            flash(f"Erro ao fazer login: {e}", "error")
+                if user and check_password_hash(user["password"], password):
+                    session["user_id"] = user["id"]
+                    session["user_email"] = user["email"]
+                    return redirect(url_for("main.index"))
+
+                flash("Email ou senha inválidos.", "error")
+        except Exception as exc:
+            logger.exception("Login error: %s", exc)
+            flash("Erro ao autenticar. Tente novamente.", "error")
         finally:
             db.put_connection(conn)
 
-    return render_template('login.html')
+    return render_template("login.html")
 
 
 @bp.route("/logout")
 def logout():
     session.clear()
-    flash("Sessão terminada com sucesso.", "success")
     return redirect(url_for("main.login"))
 
 
-@bp.route('/categories', methods=['GET', 'POST'])
+@bp.route("/categories", methods=["GET", "POST"])
 def categories():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
     conn = db.get_connection()
-    categories_list = []
-
+    items = []
     try:
-        with conn.cursor() as cursor:
-            if request.method == 'POST':
-                name = (request.form.get('name') or '').strip()
-                cat_type = request.form.get('type')
+        with conn.cursor() as cur:
+            if request.method == "POST":
+                name = (request.form.get("name") or "").strip()
+                cat_type = request.form.get("type")
 
-                if not name or cat_type not in ('receita', 'despesa'):
-                    flash("Preencha o nome e um tipo válido para a categoria.", "error")
+                if not name or cat_type not in ("receita", "despesa"):
+                    flash("Informe nome e tipo da categoria.", "error")
                 else:
-                    cursor.execute(
+                    cur.execute(
                         "INSERT INTO categories (user_id, name, type) VALUES (%s, %s, %s);",
-                        (user_id, name, cat_type)
+                        (user_id, name, cat_type),
                     )
                     conn.commit()
-                    flash("Categoria adicionada com sucesso!", "success")
-                    return redirect(url_for('main.categories'))
+                    flash("Categoria salva.", "success")
+                    return redirect(url_for("main.categories"))
 
-            cursor.execute(
+            cur.execute(
                 "SELECT id, name, type FROM categories WHERE user_id = %s ORDER BY name ASC;",
-                (user_id,)
+                (user_id,),
             )
-            categories_list = cursor.fetchall()
-    except Exception as e:
+            items = cur.fetchall()
+    except Exception as exc:
         conn.rollback()
-        flash(f"Erro nas categorias: {e}", "error")
+        flash(f"Erro ao carregar categorias: {exc}", "error")
     finally:
         db.put_connection(conn)
 
-    return render_template('categories.html', categories=categories_list)
+    return render_template("categories.html", categories=items)
 
 
-@bp.route('/categories/<int:category_id>/edit', methods=['POST'])
+@bp.route("/categories/<int:category_id>/edit", methods=["POST"])
 def edit_category(category_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
-    name = (request.form.get('name') or '').strip()
-    cat_type = request.form.get('type')
-
-    if not name or cat_type not in ('receita', 'despesa'):
-        flash("Preencha o nome e um tipo válido para a categoria.", "error")
-        return redirect(url_for('main.categories'))
+    name = (request.form.get("name") or "").strip()
+    cat_type = request.form.get("type")
+    if not name or cat_type not in ("receita", "despesa"):
+        flash("Informe nome e tipo da categoria.", "error")
+        return redirect(url_for("main.categories"))
 
     conn = db.get_connection()
     try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
+        with conn.cursor() as cur:
+            cur.execute(
+                """
                 UPDATE categories
                 SET name = %s, type = %s
                 WHERE id = %s AND user_id = %s;
-            """, (name, cat_type, category_id, user_id))
-            if cursor.rowcount == 0:
+                """,
+                (name, cat_type, category_id, user_id),
+            )
+            if cur.rowcount == 0:
                 flash("Categoria não encontrada.", "error")
             else:
                 conn.commit()
-                flash("Categoria atualizada com sucesso!", "success")
-    except Exception as e:
+                flash("Categoria atualizada.", "success")
+    except Exception as exc:
         conn.rollback()
-        flash(f"Erro ao atualizar categoria: {e}", "error")
+        flash(f"Erro ao atualizar categoria: {exc}", "error")
     finally:
         db.put_connection(conn)
 
-    return redirect(url_for('main.categories'))
+    return redirect(url_for("main.categories"))
 
 
-@bp.route('/categories/<int:category_id>/delete', methods=['POST'])
+@bp.route("/categories/<int:category_id>/delete", methods=["POST"])
 def delete_category(category_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
     conn = db.get_connection()
     try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT COUNT(*) AS total
-                FROM transactions
-                WHERE category_id = %s;
-            """, (category_id,))
-            row = cursor.fetchone()
-            if row and row['total'] > 0:
-                flash("Não é possível remover uma categoria que já possui transações associadas.", "error")
-                return redirect(url_for('main.categories'))
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COUNT(*) AS total FROM transactions WHERE category_id = %s;",
+                (category_id,),
+            )
+            row = cur.fetchone()
+            if row and row["total"] > 0:
+                flash("Categoria possui transações vinculadas e não pode ser excluída.", "error")
+                return redirect(url_for("main.categories"))
 
-            cursor.execute("""
-                DELETE FROM categories
-                WHERE id = %s AND user_id = %s;
-            """, (category_id, user_id))
-            if cursor.rowcount == 0:
+            cur.execute(
+                "DELETE FROM categories WHERE id = %s AND user_id = %s;",
+                (category_id, user_id),
+            )
+            if cur.rowcount == 0:
                 flash("Categoria não encontrada.", "error")
             else:
                 conn.commit()
-                flash("Categoria removida com sucesso!", "success")
-    except Exception as e:
+                flash("Categoria excluída.", "success")
+    except Exception as exc:
         conn.rollback()
-        flash(f"Erro ao remover categoria: {e}", "error")
+        flash(f"Erro ao excluir categoria: {exc}", "error")
     finally:
         db.put_connection(conn)
 
-    return redirect(url_for('main.categories'))
+    return redirect(url_for("main.categories"))
 
 
-@bp.route('/transactions', methods=['GET', 'POST'])
+@bp.route("/transactions", methods=["GET", "POST"])
 def transactions():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
-    filtro_tipo = request.args.get('tipo')
-    if filtro_tipo not in ('receita', 'despesa'):
-        filtro_tipo = None
+    tx_filter = request.args.get("tipo")
+    if tx_filter not in ("receita", "despesa"):
+        tx_filter = None
 
     conn = db.get_connection()
-    categories_list = []
-    transactions_list = []
-
+    cats = []
+    txs = []
     try:
-        with conn.cursor() as cursor:
-            if request.method == 'POST':
-                description = (request.form.get('description') or '').strip()
-                category_id = request.form.get('category_id', type=int)
+        with conn.cursor() as cur:
+            if request.method == "POST":
+                description = (request.form.get("description") or "").strip()
+                category_id = request.form.get("category_id", type=int)
+                amount = _parse_amount(request.form.get("amount"))
 
-                try:
-                    amount = float(request.form.get('amount'))
-                    if amount <= 0:
-                        raise ValueError()
-                except (TypeError, ValueError):
-                    flash("Informe um valor válido maior que zero.", "error")
-                    return redirect(url_for('main.transactions'))
+                if amount is None:
+                    flash("Informe um valor maior que zero.", "error")
+                    return redirect(url_for("main.transactions"))
 
                 if not description or not category_id:
-                    flash("Preencha a descrição e selecione uma categoria.", "error")
+                    flash("Preencha descrição e categoria.", "error")
                 else:
-                    cursor.execute(
+                    cur.execute(
                         "SELECT id FROM categories WHERE id = %s AND user_id = %s;",
-                        (category_id, user_id)
+                        (category_id, user_id),
                     )
-                    if not cursor.fetchone():
-                        flash("Categoria inválida para este utilizador.", "error")
+                    if not cur.fetchone():
+                        flash("Categoria inválida.", "error")
                     else:
-                        cursor.execute(
+                        cur.execute(
                             "INSERT INTO transactions (category_id, amount, description) VALUES (%s, %s, %s);",
-                            (category_id, amount, description)
+                            (category_id, amount, description),
                         )
                         conn.commit()
-                        flash("Transação adicionada com sucesso!", "success")
-                        return redirect(url_for('main.transactions'))
+                        flash("Transação registrada.", "success")
+                        return redirect(url_for("main.transactions"))
 
-            cursor.execute(
+            cur.execute(
                 "SELECT id, name, type FROM categories WHERE user_id = %s ORDER BY name ASC;",
-                (user_id,)
+                (user_id,),
             )
-            categories_list = cursor.fetchall()
+            cats = cur.fetchall()
 
-            sql_tx = """
+            sql = """
                 SELECT t.id, t.category_id, t.amount, t.description, t.transaction_at,
                        c.name AS category_name, c.type AS category_type
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
                 WHERE c.user_id = %s
             """
-            params_tx = [user_id]
-            if filtro_tipo:
-                sql_tx += " AND c.type = %s"
-                params_tx.append(filtro_tipo)
-            sql_tx += " ORDER BY t.transaction_at DESC, t.id DESC;"
+            params = [user_id]
+            if tx_filter:
+                sql += " AND c.type = %s"
+                params.append(tx_filter)
+            sql += " ORDER BY t.transaction_at DESC, t.id DESC;"
 
-            cursor.execute(sql_tx, params_tx)
-            transactions_list = cursor.fetchall()
-    except Exception as e:
+            cur.execute(sql, params)
+            txs = cur.fetchall()
+    except Exception as exc:
         conn.rollback()
-        flash(f"Erro nas transações: {e}", "error")
+        flash(f"Erro ao carregar transações: {exc}", "error")
     finally:
         db.put_connection(conn)
 
     return render_template(
-        'transactions.html',
-        categories=categories_list,
-        transactions=transactions_list,
-        filtro_atual=filtro_tipo
+        "transactions.html",
+        categories=cats,
+        transactions=txs,
+        filtro_atual=tx_filter,
     )
 
 
-@bp.route('/transactions/<int:transaction_id>/edit', methods=['POST'])
+@bp.route("/transactions/<int:transaction_id>/edit", methods=["POST"])
 def edit_transaction(transaction_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
-    description = (request.form.get('description') or '').strip()
-    category_id = request.form.get('category_id', type=int)
+    description = (request.form.get("description") or "").strip()
+    category_id = request.form.get("category_id", type=int)
+    amount = _parse_amount(request.form.get("amount"))
 
-    try:
-        amount = float(request.form.get('amount'))
-        if amount <= 0:
-            raise ValueError()
-    except (TypeError, ValueError):
-        flash("Informe um valor válido maior que zero.", "error")
-        return redirect(url_for('main.transactions'))
+    if amount is None:
+        flash("Informe um valor maior que zero.", "error")
+        return redirect(url_for("main.transactions"))
 
     if not description or not category_id:
-        flash("Preencha a descrição e selecione uma categoria.", "error")
-        return redirect(url_for('main.transactions'))
+        flash("Preencha descrição e categoria.", "error")
+        return redirect(url_for("main.transactions"))
 
     conn = db.get_connection()
     try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT id FROM categories WHERE id = %s AND user_id = %s;
-            """, (category_id, user_id))
-            if not cursor.fetchone():
-                flash("Categoria inválida para este utilizador.", "error")
-                return redirect(url_for('main.transactions'))
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM categories WHERE id = %s AND user_id = %s;",
+                (category_id, user_id),
+            )
+            if not cur.fetchone():
+                flash("Categoria inválida.", "error")
+                return redirect(url_for("main.transactions"))
 
-            cursor.execute("""
+            cur.execute(
+                """
                 UPDATE transactions t
                 SET amount = %s, description = %s, category_id = %s
                 FROM categories c
                 WHERE t.id = %s
                   AND t.category_id = c.id
                   AND c.user_id = %s;
-            """, (amount, description, category_id, transaction_id, user_id))
-
-            if cursor.rowcount == 0:
+                """,
+                (amount, description, category_id, transaction_id, user_id),
+            )
+            if cur.rowcount == 0:
                 flash("Transação não encontrada.", "error")
             else:
                 conn.commit()
-                flash("Transação atualizada com sucesso!", "success")
-    except Exception as e:
+                flash("Transação atualizada.", "success")
+    except Exception as exc:
         conn.rollback()
-        flash(f"Erro ao atualizar transação: {e}", "error")
+        flash(f"Erro ao atualizar transação: {exc}", "error")
     finally:
         db.put_connection(conn)
 
-    return redirect(url_for('main.transactions'))
+    return redirect(url_for("main.transactions"))
 
 
-@bp.route('/transactions/<int:transaction_id>/delete', methods=['POST'])
+@bp.route("/transactions/<int:transaction_id>/delete", methods=["POST"])
 def delete_transaction(transaction_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("main.login"))
 
-    user_id = session['user_id']
     conn = db.get_connection()
     try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
+        with conn.cursor() as cur:
+            cur.execute(
+                """
                 DELETE FROM transactions t
                 USING categories c
                 WHERE t.id = %s
                   AND t.category_id = c.id
                   AND c.user_id = %s;
-            """, (transaction_id, user_id))
-
-            if cursor.rowcount == 0:
+                """,
+                (transaction_id, user_id),
+            )
+            if cur.rowcount == 0:
                 flash("Transação não encontrada.", "error")
             else:
                 conn.commit()
-                flash("Transação removida com sucesso!", "success")
-    except Exception as e:
+                flash("Transação excluída.", "success")
+    except Exception as exc:
         conn.rollback()
-        flash(f"Erro ao remover transação: {e}", "error")
+        flash(f"Erro ao excluir transação: {exc}", "error")
     finally:
         db.put_connection(conn)
 
-    return redirect(url_for('main.transactions'))
+    return redirect(url_for("main.transactions"))
