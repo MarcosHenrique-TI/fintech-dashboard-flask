@@ -22,10 +22,12 @@ CREATE TABLE transactions (
     category_id INTEGER NOT NULL
 );
 
+
+-- Adding foreign key constraints
 ALTER TABLE categories 
 ADD CONSTRAINT fk_user 
 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
+-- Adding foreign key constraint for transactions
 ALTER TABLE transactions
 ADD CONSTRAINT fk_categories
 FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE;
