@@ -16,6 +16,12 @@ A multi-user personal finance control system developed in **Python (Flask)** and
 - **Transaction Management & Ledger (`/transactions`)**: Create, edit (inline), delete, and filter transactions by type (`Todas`, `Receitas`, `Despesas`).
 - **Light Mode Primary + Dark Mode Toggle**: Defaults to a crisp light theme (`#E3F2FD` background with high-contrast white cards) and supports switching to dark mode via `localStorage` (`fintech_theme`), updating charts dynamically.
 
+## Tech Stack
+
+- **Backend**: Python, Flask (Application Factory & Blueprints), psycopg2, Werkzeug
+- **Database**: PostgreSQL
+- **Frontend**: Jinja2 templates, Tailwind CSS (v4 via CDN), Chart.js (via CDN), Vanilla JavaScript
+
 ## Project Architecture
 
 ```text
@@ -32,3 +38,49 @@ fintech-dashboard-flask/
 │   ├── login.html         # User sign-in view
 │   └── register.html      # User registration view
 └── README.md
+```
+
+## Prerequisites
+
+- Python 3.10+
+- PostgreSQL running locally or remotely
+- `pip` / virtual environment (`venv`)
+
+## Setup & Installation
+
+1. **Clone the repository**
+
+```bash
+git clone https://github.com/MarcosHenrique-TI/fintech-dashboard-flask.git
+cd fintech-dashboard-flask
+```
+
+2. **Create and activate a virtual environment**
+
+```bash
+python -m venv .venv
+
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+
+# Linux / macOS
+source .venv/bin/activate
+```
+
+3. **Install dependencies**
+
+```bash
+pip install flask psycopg2-binary werkzeug
+```
+
+4. **Configure PostgreSQL database**
+
+Create your database and tables (`users`, `categories`, and `transactions`), ensuring `categories.user_id` references `users(id)` and `transactions.category_id` references `categories(id)`. Configure your database connection settings in your environment or `fintech/db.py`.
+
+5. **Run the application**
+
+```bash
+flask --app fintech run --debug
+```
+
+Open `http://127.0.0.1:5000` in your browser.
